@@ -61,15 +61,16 @@ public class HuffmanTree {
         huffTree.root = root;
     }
 
-    private void constructH(BitInputStream in, TreeNode root) {
+    private void constructH(BitInputStream in, TreeNode cur) {
         int nextBit;
         nextBit = in.readBit();
+        System.out.print(nextBit);
         if (nextBit == 1) {
-            root = new TreeNode(nextBit, (short) 0);
-            constructH(in, root.left);
-            constructH(in, root.right);
+            cur = new TreeNode(nextBit, (short) 300);
+            constructH(in, cur.left);
+            constructH(in, cur.right);
         } else {
-            root = new TreeNode(nextBit, (short) in.readBits(9));
+            cur = new TreeNode(nextBit, (short) in.readBits(9));
         }
 
     }
@@ -79,8 +80,19 @@ public class HuffmanTree {
      * @param in the input file (as a BitInputStream)
      */
     public HuffmanTree (BitInputStream in) {
+        checkForGrin(in);
         huffTree = new BinaryTree();
-        constructH(in, huffTree.root);
+        int nextBit;
+        nextBit = in.readBit();
+        System.out.print(nextBit);
+        if (nextBit == 1) {
+            huffTree.root = new TreeNode(nextBit, (short) 300);
+        } else {
+            huffTree.root = new TreeNode(nextBit, (short) in.readBits(9));
+        }
+        constructH(in, huffTree.root.left);
+        constructH(in, huffTree.root.right);
+        System.out.println(huffTree.root != null);
     }
 
     private void serializeH(BitOutputStream out, TreeNode root) {
@@ -110,7 +122,7 @@ public class HuffmanTree {
      * @param out the file to write the compressed output to.
      */
     public void encode (BitInputStream in, BitOutputStream out) {
-        out.writeBit(0x736);
+        out.writeBits(1846, 32);
         serialize(out);
         //writeChars(); // need to write serialized chars to file
         in.close();
@@ -119,7 +131,9 @@ public class HuffmanTree {
     }
 
     private short traverseForChar(BitInputStream in, TreeNode root) {
+        System.out.println("traverseForChar");
         if (root.bit != 0) {
+            System.out.println("read bit");
             if (root.left != null) {
                 return traverseForChar(in, root.left);
             } else {
@@ -127,19 +141,26 @@ public class HuffmanTree {
             }
 
         } else {
+            System.out.println("read bit");
             return root.character;
         }
     }
 
 
     private void decodeText(BitInputStream in, BitOutputStream out) {
+        System.out.println("decodeText");
         while (in.hasBits()) {
+            short i = traverseForChar(in, huffTree.root);
+            System.out.println(i);
             out.writeBits(traverseForChar(in, huffTree.root), 8);
         }
     }
 
     private void checkForGrin(BitInputStream in) {
-        if (in.readBits(32) != 1846) {
+        int i = in.readBits(32);
+        System.out.println(i);
+        if (i != 1846) {
+            System.out.println("Input file must be a Grin file");
             throw new IllegalArgumentException();
         }
     }
@@ -153,8 +174,6 @@ public class HuffmanTree {
      * @param out the file to write the decompressed output to.
      */
     public void decode (BitInputStream in, BitOutputStream out) {
-        checkForGrin(in);
-        constructH(in, huffTree.root);
         decodeText(in, out);
         in.close();
         out.close();

@@ -17,18 +17,6 @@ public class Grin {
      * @throws IOException 
      */
     public static void decode (String infile, String outfile) throws IOException {
-        File inputFile = new File(infile);
-        if (!(inputFile.exists())) {
-            System.out.println("Usage: java Grin <encode|decode> <infile> <outfile>");
-            System.exit(-1);
-        }
-
-        File outputFile = new File(outfile);
-        if (!(outputFile.exists())) {
-            System.out.println("Usage: java Grin <encode|decode> <infile> <outfile>");
-            System.exit(-1);
-        }
-
         BitInputStream input = new BitInputStream(infile);
         HuffmanTree huffTree = new HuffmanTree(input);
         BitOutputStream output = new BitOutputStream(outfile);
@@ -65,17 +53,6 @@ public class Grin {
      * @throws IOException 
      */
     public static void encode(String infile, String outfile) throws IOException {
-        File inputFile = new File(infile);
-        if (!(inputFile.exists())) {
-            System.out.println("Usage: java Grin <encode|decode> <infile> <outfile>");
-            System.exit(-1);
-        }
-
-        File outputFile = new File(outfile);
-        if (!(outputFile.exists())) {
-            System.out.println("Usage: java Grin <encode|decode> <infile> <outfile>");
-            System.exit(-1);
-        }
         Map<Short,Integer> freqMap = createFrequencyMap(infile);
         HuffmanTree huffTree = new HuffmanTree(freqMap);
         BitInputStream input = new BitInputStream(infile);
@@ -89,25 +66,20 @@ public class Grin {
      * @throws IOException 
      */
     public static void main(String[] args) throws IOException {
-        /* 
         boolean encode = false;
         if (args[0].toLowerCase().compareTo("encode") == 0) {
             encode = true;
         } else if (args[0].toLowerCase().compareTo("decode") == 0) {
              encode = false;
         } else {
+        System.out.println("No decode or encode");
         System.out.println("Usage: java Grin <encode|decode> <infile> <outfile>");
         System.exit(-1);
         }
         
         File inputFile = new File(args[1]);
         if (!(inputFile.exists())) {
-            System.out.println("Usage: java Grin <encode|decode> <infile> <outfile>");
-            System.exit(-1);
-        }
-
-        File outputFile = new File(args[1]);
-        if (!(outputFile.exists())) {
+            System.out.println("Input file does not exist");
             System.out.println("Usage: java Grin <encode|decode> <infile> <outfile>");
             System.exit(-1);
         }
@@ -117,7 +89,5 @@ public class Grin {
         } else {
             decode(args[1], args[2]);
         }
-            */
-        System.out.println(args[0]);
     }
 }

@@ -10,6 +10,8 @@ public class TreeNode {
     public TreeNode(int bit, short character) {
         this.bit = bit;
         this.character = character;
+        this.left = null;
+        this.right = null;
     }
 
 }
