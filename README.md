@@ -1,13 +1,15 @@
 # Project: Grin Compression
 
-Authors: (_TODO: fill in names here!_)
+Authors: Colton Benson
 
 ## Resources
 
-*   (_TODO: fill in resources here!_)
-*   ...
-*   ...
+*   Peter-Michael Osera for his instructions, guidance, and starter code for this project.
+*   VSCode for serving as the IDE for this project. 
+*   Java 23 was used for testing of this project
 
 ## Revision Log
 
-*   (_TODO: fill in your changes to your project here!_)
+*   April 23rd: Inital Code Outline 
+*   April 26th: Finished Implementation
+*   April 27th: Fixed bugs and style
