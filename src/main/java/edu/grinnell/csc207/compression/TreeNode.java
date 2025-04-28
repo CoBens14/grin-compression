@@ -4,11 +4,11 @@ package edu.grinnell.csc207.compression;
  * TreeNode class
  */
 public class TreeNode implements Comparable {
-    public int bit;
-    public short character;
+    private int bit;
+    private short character;
 
-    public TreeNode left;
-    public TreeNode right;
+    private TreeNode left;
+    private TreeNode right;
 
     /**
      * @param bit the bit of the TreeNode
@@ -37,6 +37,62 @@ public class TreeNode implements Comparable {
         } else {
             return -1;
         }
+    }
+
+    /**
+     * @return the bit
+     */
+    public int getBit() {
+        return bit;
+    }
+
+    /**
+     * @param bit new bit value
+     */
+    public void setBit(int bit) {
+        this.bit = bit;
+    }
+
+    /**
+     * @return the character
+     */
+    public short getCharacter() {
+        return character;
+    }
+
+    /**
+     * @param character new character
+     */
+    public void setCharacter(short character) {
+        this.character = character;
+    }
+
+    /**
+     * @return left node
+     */
+    public TreeNode getLeft() {
+        return left;
+    }
+
+    /**
+     * @param left new left node
+     */
+    public void setLeft(TreeNode left) {
+        this.left = left;
+    }
+
+    /**
+     * @return right node
+     */
+    public TreeNode getRight() {
+        return right;
+    }
+
+    /**
+     * @param right new right node
+     */
+    public void setRight(TreeNode right) {
+        this.right = right;
     }
 
 }

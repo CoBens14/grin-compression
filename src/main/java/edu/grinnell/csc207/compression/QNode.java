@@ -4,9 +4,9 @@ package edu.grinnell.csc207.compression;
  * QNode Class
  */
 public class QNode implements Comparable {
-    public short character;
-    public int amount;
-    public TreeNode tNode;
+    private short character;
+    private int amount;
+    private TreeNode tNode;
 
     /**
      * Constructor for QNode
@@ -39,5 +39,47 @@ public class QNode implements Comparable {
         } else {
             return -1;
         }
+    }
+
+    /**
+     * @return character
+     */
+    public short getCharacter() {
+        return character;
+    }
+
+    /**
+     * @param character new character
+     */
+    public void setCharacter(short character) {
+        this.character = character;
+    }
+
+    /**
+     * @return amount
+     */
+    public int getAmount() {
+        return amount;
+    }
+
+    /**
+     * @param amount new amount
+     */
+    public void setAmount(int amount) {
+        this.amount = amount;
+    }
+
+    /**
+     * @return tNode
+     */
+    public TreeNode gettNode() {
+        return tNode;
+    }
+
+    /**
+     * @param tNode new tNode
+     */
+    public void setTNode(TreeNode tNode) {
+        this.tNode = tNode;
     }
 }

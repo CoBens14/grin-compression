@@ -48,31 +48,31 @@ public class HuffmanTree {
         // create tree
         while (priorQ.size() > 1) {
             int bitVal = 1;
-            if (priorQ.peek().character < 257) {
+            if (priorQ.peek().getCharacter() < 257) {
                 bitVal = 0;
             }
-            if (priorQ.peek().tNode != null) {
-                left = priorQ.peek().tNode;
+            if (priorQ.peek().gettNode() != null) {
+                left = priorQ.peek().gettNode();
             } else {
-                left = new TreeNode(bitVal, priorQ.peek().character);
+                left = new TreeNode(bitVal, priorQ.peek().getCharacter());
             }
-            int freq1 = priorQ.remove().amount;
-            if (priorQ.peek().character < 257) {
+            int freq1 = priorQ.remove().getAmount();
+            if (priorQ.peek().getCharacter() < 257) {
                 bitVal = 0;
             }
-            if (priorQ.peek().tNode != null) {
-                right = priorQ.peek().tNode;
+            if (priorQ.peek().gettNode() != null) {
+                right = priorQ.peek().gettNode();
             } else {
-                right = new TreeNode(bitVal, priorQ.peek().character);
+                right = new TreeNode(bitVal, priorQ.peek().getCharacter());
             }
-            int freq2 = priorQ.remove().amount;
+            int freq2 = priorQ.remove().getAmount();
             cur = new TreeNode(1, (short) (300 + offset));
-            cur.left = left;
-            cur.right = right;
+            cur.setLeft(left); 
+            cur.setRight(right);
             priorQ.add(new QNode((short) (300 + offset), freq1 + freq2, cur));
             offset += 1;
         }
-        huffTree.root = cur;
+        huffTree.setRoot(cur);
     }
 
     /**
@@ -88,8 +88,8 @@ public class HuffmanTree {
         TreeNode input;
         if (nextBit == 1) {
             input = new TreeNode(nextBit, (short) 300);
-            input.left = constructH(in, input.left);
-            input.right = constructH(in, input.right);
+            input.setLeft(constructH(in, input.getLeft()));
+            input.setRight(constructH(in, input.getRight()));;
         } else {
             input = new TreeNode(nextBit, (short) in.readBits(9));
         }
@@ -105,7 +105,7 @@ public class HuffmanTree {
     public HuffmanTree(BitInputStream in) {
         checkForGrin(in);
         huffTree = new BinaryTree();
-        huffTree.root = constructH(in, huffTree.root);
+        huffTree.setRoot(constructH(in, huffTree.getRoot()));
     }
 
     /**
@@ -115,13 +115,13 @@ public class HuffmanTree {
      * @param cur the current TreeNode 
      */
     private void serializeH(BitOutputStream out, TreeNode cur) {
-        if (cur != null && cur.bit == 1) {
-            out.writeBit(cur.bit);
-            serializeH(out, cur.left);
-            serializeH(out, cur.right);
+        if (cur != null && cur.getBit() == 1) {
+            out.writeBit(cur.getBit());
+            serializeH(out, cur.getLeft());
+            serializeH(out, cur.getRight());
         } else if (cur != null) {
-            out.writeBit(cur.bit);
-            out.writeBits(cur.character, 9);
+            out.writeBit(cur.getBit());
+            out.writeBits(cur.getCharacter(), 9);
         }
     }
 
@@ -132,7 +132,7 @@ public class HuffmanTree {
      * @param out the output file as a BitOutputStream
      */
     public void serialize(BitOutputStream out) {
-        serializeH(out, huffTree.root);
+        serializeH(out, huffTree.getRoot());
     }
 
     /**
@@ -146,17 +146,18 @@ public class HuffmanTree {
         List<Short> checkedList = new ArrayList<>();
         List<Integer> ret = new ArrayList<>();
 
-        stack.add(huffTree.root);
+        stack.add(huffTree.getRoot());
 
-        while (stack.peek().character != neededChar) {
-            if (stack.peek().left != null && !(checkedList.contains(stack.peek().left.character))) {
-                checkedList.add(stack.peek().left.character);
-                stack.add(stack.peek().left);
+        while (stack.peek().getCharacter() != neededChar) {
+            if (stack.peek().getLeft() != null 
+                    && !(checkedList.contains(stack.peek().getLeft().getCharacter()))) {
+                checkedList.add(stack.peek().getLeft().getCharacter());
+                stack.add(stack.peek().getLeft());
                 ret.add(0);
-            } else if (stack.peek().right != null 
-                    && !(checkedList.contains(stack.peek().right.character))) {
-                checkedList.add(stack.peek().right.character);
-                stack.add(stack.peek().right);
+            } else if (stack.peek().getRight() != null 
+                    && !(checkedList.contains(stack.peek().getRight().getCharacter()))) {
+                checkedList.add(stack.peek().getRight().getCharacter());
+                stack.add(stack.peek().getRight());
                 ret.add(1);
             } else {
                 stack.pop();
@@ -180,7 +181,6 @@ public class HuffmanTree {
             short nextChar = (short) in.readBits(8);
             List<Integer> bitSeries = findChar(nextChar);
             for (int i = 0; i < bitSeries.size(); i++) {
-                System.out.println(bitSeries.get(i));
                 out.writeBit(bitSeries.get(i));
             }
         }
@@ -212,14 +212,14 @@ public class HuffmanTree {
      */
     private short traverseForChar(BitInputStream in, TreeNode cur) {
         int nextBit;
-        if (cur.left == null) {
-            return cur.character;
+        if (cur.getLeft() == null) {
+            return cur.getCharacter();
         } else {
             nextBit = in.readBit();
             if (nextBit == 0) {
-                return traverseForChar(in, cur.left);
+                return traverseForChar(in, cur.getLeft());
             } else {
-                return traverseForChar(in, cur.right);
+                return traverseForChar(in, cur.getRight());
             }
         }
     }
@@ -232,7 +232,7 @@ public class HuffmanTree {
      */
     private void decodeText(BitInputStream in, BitOutputStream out) {
         while (in.hasBits()) {
-            out.writeBits(traverseForChar(in, huffTree.root), 8);
+            out.writeBits(traverseForChar(in, huffTree.getRoot()), 8);
         }
     }
 
