@@ -67,7 +67,7 @@ public class HuffmanTree {
             }
             int freq2 = priorQ.remove().getAmount();
             cur = new TreeNode(1, (short) (300 + offset));
-            cur.setLeft(left); 
+            cur.setLeft(left);
             cur.setRight(right);
             priorQ.add(new QNode((short) (300 + offset), freq1 + freq2, cur));
             offset += 1;
@@ -78,7 +78,7 @@ public class HuffmanTree {
     /**
      * Helper that helps construct tree
      * 
-     * @param in the InputStream used to read in bit information
+     * @param in  the InputStream used to read in bit information
      * @param cur the current TreeNode
      * @return the TreeNode needed based on inputStream
      */
@@ -89,7 +89,8 @@ public class HuffmanTree {
         if (nextBit == 1) {
             input = new TreeNode(nextBit, (short) 300);
             input.setLeft(constructH(in, input.getLeft()));
-            input.setRight(constructH(in, input.getRight()));;
+            input.setRight(constructH(in, input.getRight()));
+            ;
         } else {
             input = new TreeNode(nextBit, (short) in.readBits(9));
         }
@@ -112,7 +113,7 @@ public class HuffmanTree {
      * Helper that writes tree as bits
      * 
      * @param out the output stream that bits are being written to
-     * @param cur the current TreeNode 
+     * @param cur the current TreeNode
      */
     private void serializeH(BitOutputStream out, TreeNode cur) {
         if (cur != null && cur.getBit() == 1) {
@@ -149,12 +150,12 @@ public class HuffmanTree {
         stack.add(huffTree.getRoot());
 
         while (stack.peek().getCharacter() != neededChar) {
-            if (stack.peek().getLeft() != null 
+            if (stack.peek().getLeft() != null
                     && !(checkedList.contains(stack.peek().getLeft().getCharacter()))) {
                 checkedList.add(stack.peek().getLeft().getCharacter());
                 stack.add(stack.peek().getLeft());
                 ret.add(0);
-            } else if (stack.peek().getRight() != null 
+            } else if (stack.peek().getRight() != null
                     && !(checkedList.contains(stack.peek().getRight().getCharacter()))) {
                 checkedList.add(stack.peek().getRight().getCharacter());
                 stack.add(stack.peek().getRight());
@@ -173,17 +174,26 @@ public class HuffmanTree {
     /**
      * Writes chars to outputStream
      * 
-     * @param in the input stream used to determine chars
+     * @param in  the input stream used to determine chars
      * @param out the output stream chars are being written to
      */
     private void writeChars(BitInputStream in, BitOutputStream out) {
+        short nextChar;
+        List<Integer> bitSeries;
         while (in.hasBits()) {
-            short nextChar = (short) in.readBits(8);
-            List<Integer> bitSeries = findChar(nextChar);
+            nextChar = (short) in.readBits(8);
+            bitSeries = findChar(nextChar);
             for (int i = 0; i < bitSeries.size(); i++) {
                 out.writeBit(bitSeries.get(i));
             }
         }
+        // Add EOF
+        nextChar = (short) 256;
+        bitSeries = findChar(nextChar);
+        for (int i = 0; i < bitSeries.size(); i++) {
+            out.writeBit(bitSeries.get(i));
+        }
+
     }
 
     /**
@@ -206,7 +216,7 @@ public class HuffmanTree {
     /**
      * Traverse tree for given char
      * 
-     * @param in the InputStream used for reading in chars
+     * @param in  the InputStream used for reading in chars
      * @param cur the current TreeNode being searched
      * @return a short of
      */
@@ -227,19 +237,21 @@ public class HuffmanTree {
     /**
      * Writes chars to outputStream
      * 
-     * @param in the InputStream that stores char information
+     * @param in  the InputStream that stores char information
      * @param out the OutPutStream used for writing chars to file
      */
     private void decodeText(BitInputStream in, BitOutputStream out) {
-        while (in.hasBits()) {
-            out.writeBits(traverseForChar(in, huffTree.getRoot()), 8);
+        short nextChar = traverseForChar(in, huffTree.getRoot());
+        while (nextChar != 256) {
+            out.writeBits(nextChar, 8);
+            nextChar = traverseForChar(in, huffTree.getRoot());
         }
     }
 
     /**
      * Ensure file is a Grin file
      * 
-     * @param in the inputStream of file 
+     * @param in the inputStream of file
      */
     private void checkForGrin(BitInputStream in) {
         int i = in.readBits(32);
