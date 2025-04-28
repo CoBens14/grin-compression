@@ -1,25 +1,24 @@
 package edu.grinnell.csc207.compression;
 
-import java.util.Collection;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.PriorityQueue;
-import java.util.TreeMap;
-import java.util.TreeSet;
+import java.util.Stack;
 
 /**
  * A HuffmanTree derives a space-efficient coding of a collection of byte
  * values.
  *
  * The huffman tree encodes values in the range 0--255 which would normally
- * take 8 bits.  However, we also need to encode a special EOF character to
- * denote the end of a .grin file.  Thus, we need 9 bits to store each
- * byte value.  This is fine for file writing (modulo the need to write in
+ * take 8 bits. However, we also need to encode a special EOF character to
+ * denote the end of a .grin file. Thus, we need 9 bits to store each
+ * byte value. This is fine for file writing (modulo the need to write in
  * byte chunks to the file), but Java does not have a 9-bit data type.
  * Instead, we use the next larger primitive integral type, short, to store
  * our byte values.
  */
 public class HuffmanTree {
-
 
     BinaryTree huffTree;
 
@@ -27,10 +26,13 @@ public class HuffmanTree {
 
     /**
      * Constructs a new HuffmanTree from a frequency map.
+     * 
      * @param freqs a map from 9-bit values to frequencies.
      */
-    public HuffmanTree (Map<Short, Integer> freqs) {
-        TreeNode root = null;
+    public HuffmanTree(Map<Short, Integer> freqs) {
+        TreeNode cur = null;
+        priorQ = new PriorityQueue<>();
+        huffTree = new BinaryTree();
         // add all characters from map
         for (int i = 0; i < 256; i++) {
             if (freqs.get((short) i) != null) {
@@ -39,126 +41,208 @@ public class HuffmanTree {
         }
         // add EOF char
         priorQ.add(new QNode((short) 256, 1, null));
-        
+
+        int offset = 0;
+        TreeNode left, right;
+
         // create tree
         while (priorQ.size() > 1) {
             int bitVal = 1;
-            if (priorQ.peek().character < 257) { 
+            if (priorQ.peek().character < 257) {
                 bitVal = 0;
             }
-            TreeNode left = new TreeNode(bitVal, priorQ.peek().character);
+            if (priorQ.peek().tNode != null) {
+                left = priorQ.peek().tNode;
+            } else {
+                left = new TreeNode(bitVal, priorQ.peek().character);
+            }
             int freq1 = priorQ.remove().amount;
-            if (priorQ.peek().character < 257) { 
+            if (priorQ.peek().character < 257) {
                 bitVal = 0;
             }
-            TreeNode right = new TreeNode(bitVal, priorQ.peek().character);
+            if (priorQ.peek().tNode != null) {
+                right = priorQ.peek().tNode;
+            } else {
+                right = new TreeNode(bitVal, priorQ.peek().character);
+            }
             int freq2 = priorQ.remove().amount;
-            root = new TreeNode(1, (short) 300);
-            root.left = left;
-            root.right = right;
-            priorQ.add(new QNode((short) 300, freq1 + freq2, root));   
+            cur = new TreeNode(1, (short) (300 + offset));
+            cur.left = left;
+            cur.right = right;
+            priorQ.add(new QNode((short) (300 + offset), freq1 + freq2, cur));
+            offset += 1;
         }
-        huffTree.root = root;
+        huffTree.root = cur;
     }
 
-    private void constructH(BitInputStream in, TreeNode cur) {
+    /**
+     * Helper that helps construct tree
+     * 
+     * @param in the InputStream used to read in bit information
+     * @param cur the current TreeNode
+     * @return the TreeNode needed based on inputStream
+     */
+    private TreeNode constructH(BitInputStream in, TreeNode cur) {
         int nextBit;
         nextBit = in.readBit();
-        System.out.print(nextBit);
+        TreeNode input;
         if (nextBit == 1) {
-            cur = new TreeNode(nextBit, (short) 300);
-            constructH(in, cur.left);
-            constructH(in, cur.right);
+            input = new TreeNode(nextBit, (short) 300);
+            input.left = constructH(in, input.left);
+            input.right = constructH(in, input.right);
         } else {
-            cur = new TreeNode(nextBit, (short) in.readBits(9));
+            input = new TreeNode(nextBit, (short) in.readBits(9));
         }
+        return input;
 
     }
 
     /**
      * Constructs a new HuffmanTree from the given file.
+     * 
      * @param in the input file (as a BitInputStream)
      */
-    public HuffmanTree (BitInputStream in) {
+    public HuffmanTree(BitInputStream in) {
         checkForGrin(in);
         huffTree = new BinaryTree();
-        int nextBit;
-        nextBit = in.readBit();
-        System.out.print(nextBit);
-        if (nextBit == 1) {
-            huffTree.root = new TreeNode(nextBit, (short) 300);
-        } else {
-            huffTree.root = new TreeNode(nextBit, (short) in.readBits(9));
-        }
-        constructH(in, huffTree.root.left);
-        constructH(in, huffTree.root.right);
-        System.out.println(huffTree.root != null);
+        huffTree.root = constructH(in, huffTree.root);
     }
 
-    private void serializeH(BitOutputStream out, TreeNode root) {
-        if (root.left != null) {
-            out.writeBit(root.bit);
-            serializeH(out, root.left);
-            serializeH(out, root.right);
-        } else {
-            out.writeBits(root.character, 9);
+    /**
+     * Helper that writes tree as bits
+     * 
+     * @param out the output stream that bits are being written to
+     * @param cur the current TreeNode 
+     */
+    private void serializeH(BitOutputStream out, TreeNode cur) {
+        if (cur != null && cur.bit == 1) {
+            out.writeBit(cur.bit);
+            serializeH(out, cur.left);
+            serializeH(out, cur.right);
+        } else if (cur != null) {
+            out.writeBit(cur.bit);
+            out.writeBits(cur.character, 9);
         }
     }
 
     /**
      * Writes this HuffmanTree to the given file as a stream of bits in a
      * serialized format.
+     * 
      * @param out the output file as a BitOutputStream
      */
-    public void serialize (BitOutputStream out) {
+    public void serialize(BitOutputStream out) {
         serializeH(out, huffTree.root);
     }
-   
+
+    /**
+     * Finds given char in tree
+     * 
+     * @param neededChar the char being searched for
+     * @return returns tree route as series of bits
+     */
+    private List<Integer> findChar(short neededChar) {
+        Stack<TreeNode> stack = new Stack<>();
+        List<Short> checkedList = new ArrayList<>();
+        List<Integer> ret = new ArrayList<>();
+
+        stack.add(huffTree.root);
+
+        while (stack.peek().character != neededChar) {
+            if (stack.peek().left != null && !(checkedList.contains(stack.peek().left.character))) {
+                checkedList.add(stack.peek().left.character);
+                stack.add(stack.peek().left);
+                ret.add(0);
+            } else if (stack.peek().right != null 
+                    && !(checkedList.contains(stack.peek().right.character))) {
+                checkedList.add(stack.peek().right.character);
+                stack.add(stack.peek().right);
+                ret.add(1);
+            } else {
+                stack.pop();
+                if (!ret.isEmpty()) {
+                    ret.remove(ret.size() - 1);
+                }
+            }
+        }
+
+        return ret;
+    }
+
+    /**
+     * Writes chars to outputStream
+     * 
+     * @param in the input stream used to determine chars
+     * @param out the output stream chars are being written to
+     */
+    private void writeChars(BitInputStream in, BitOutputStream out) {
+        while (in.hasBits()) {
+            short nextChar = (short) in.readBits(8);
+            List<Integer> bitSeries = findChar(nextChar);
+            for (int i = 0; i < bitSeries.size(); i++) {
+                System.out.println(bitSeries.get(i));
+                out.writeBit(bitSeries.get(i));
+            }
+        }
+    }
+
     /**
      * Encodes the file given as a stream of bits into a compressed format
      * using this Huffman tree. The encoded values are written, bit-by-bit
      * to the given BitOuputStream.
-     * @param in the file to compress.
+     * 
+     * @param in  the file to compress.
      * @param out the file to write the compressed output to.
      */
-    public void encode (BitInputStream in, BitOutputStream out) {
+    public void encode(BitInputStream in, BitOutputStream out) {
         out.writeBits(1846, 32);
         serialize(out);
-        //writeChars(); // need to write serialized chars to file
+        writeChars(in, out);
         in.close();
         out.close();
 
     }
 
-    private short traverseForChar(BitInputStream in, TreeNode root) {
-        System.out.println("traverseForChar");
-        if (root.bit != 0) {
-            System.out.println("read bit");
-            if (root.left != null) {
-                return traverseForChar(in, root.left);
-            } else {
-                return traverseForChar(in, root.right);
-            }
-
+    /**
+     * Traverse tree for given char
+     * 
+     * @param in the InputStream used for reading in chars
+     * @param cur the current TreeNode being searched
+     * @return a short of
+     */
+    private short traverseForChar(BitInputStream in, TreeNode cur) {
+        int nextBit;
+        if (cur.left == null) {
+            return cur.character;
         } else {
-            System.out.println("read bit");
-            return root.character;
+            nextBit = in.readBit();
+            if (nextBit == 0) {
+                return traverseForChar(in, cur.left);
+            } else {
+                return traverseForChar(in, cur.right);
+            }
         }
     }
 
-
+    /**
+     * Writes chars to outputStream
+     * 
+     * @param in the InputStream that stores char information
+     * @param out the OutPutStream used for writing chars to file
+     */
     private void decodeText(BitInputStream in, BitOutputStream out) {
-        System.out.println("decodeText");
         while (in.hasBits()) {
-            short i = traverseForChar(in, huffTree.root);
-            System.out.println(i);
             out.writeBits(traverseForChar(in, huffTree.root), 8);
         }
     }
 
+    /**
+     * Ensure file is a Grin file
+     * 
+     * @param in the inputStream of file 
+     */
     private void checkForGrin(BitInputStream in) {
         int i = in.readBits(32);
-        System.out.println(i);
         if (i != 1846) {
             System.out.println("Input file must be a Grin file");
             throw new IllegalArgumentException();
@@ -170,10 +254,11 @@ public class HuffmanTree {
      * bits into their uncompressed form, saving the results to the given
      * output stream. Note that the EOF character is not written to out
      * because it is not a valid 8-bit chunk (it is 9 bits).
-     * @param in the file to decompress.
+     * 
+     * @param in  the file to decompress.
      * @param out the file to write the decompressed output to.
      */
-    public void decode (BitInputStream in, BitOutputStream out) {
+    public void decode(BitInputStream in, BitOutputStream out) {
         decodeText(in, out);
         in.close();
         out.close();
